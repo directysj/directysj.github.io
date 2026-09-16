@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research — Jalim Singh</title>
+<meta name="description" content="Research projects by Jalim Singh: allosteric signaling, cell state transitions, biomolecular condensates, and statistical physics of soft matter.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%231f6f6b%22/><circle cx=%2270%22 cy=%2235%22 r=%2210%22 fill=%22%23b5762a%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-name" href="index.html">Jalim Singh</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="research.html" aria-current="page">Research</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head wrap">
+  <h1>Research</h1>
+  <p class="sub">From glassy polymers to allosteric signaling in proteins — a path through statistical physics, systems biology, and machine learning for biomolecular systems.</p>
+</div>
+
+<main>
+  <div class="wrap">
+
+    <section class="section">
+      <h2>Cell state transitions</h2>
+      <figure class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_4d90baa430ce4e7d9e299a75f716b833~mv2.png/v1/fill/w_600,h_420,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/cell%20state%20transitions.png" alt="Schematic of morphodynamic cell state transitions and RNA-level variation across states" loading="lazy">
+        <figcaption>Morphodynamic state changes and variation in RNA level of genes across cell states.</figcaption>
+      </figure>
+      <p>A "cell state" can be associated with characteristics like shape, size, morphology, the presence of specific RNA and/or protein molecules, and active or inactive promoter sites. Cells transition between functional or phenotypic states during processes such as embryonic development, tissue regeneration, and cancer cell adaptability. Waddington proposed decades ago that cells move between metastable states much like a marble rolling down a hill with many valleys — a qualitative picture. Understanding these transitions at the molecular level matters for basic biology and for therapies that manage or reverse pathological cellular behavior, particularly in cancer, where malignant cells hijack these pathways to grow and resist treatment.</p>
+      <p>MCF10A, a non-tumorigenic cell line, is a useful system for studying state transitions under different ligand treatments, comparing control against treatment behavior. We can't yet measure every molecule in a cell at once, but single-cell multi-omics lets us measure the expression of "key" markers that plausibly constitute a functional cell state. We characterized morphodynamic cell states and the transitions between them by building a Markov State Model (MSM) from single-cell trajectories based on cellular features, then used linear algebra to connect those morphodynamic states to gene RNA levels measured by bulk RNA-seq. We predicted per-gene RNA levels in held-out morphodynamic cell states using machine learning — connecting cellular motion to molecules.</p>
+      <p>Work from the Zuckerman Lab, in collaboration with Prof. Laura Heiser:</p>
+      <ul class="pub-list">
+        <li>Jeremy Copperman, Sean M. Gross, Young Hwan Chang, Laura M. Heiser, and Daniel M. Zuckerman, <em>Communications Biology</em> (2023) 6:484.</li>
+        <li>J. Singh, J. Copperman, L. M. Heiser, D. M. Zuckerman, "Inferring single-cell dynamics of a molecular reporter from unlabeled live-cell light microscopy data analyzed with delay embedding," <a href="https://www.biorxiv.org/content/10.1101/2025.01.23.634593v1">bioRxiv</a></li>
+        <li>Jeremy Copperman, Ian C. McLean, Sean M. Gross, Jalim Singh, Young Hwan Chang, Daniel M. Zuckerman, and Laura M. Heiser, "Single-cell morphodynamical trajectories enable prediction of gene expression accompanying cell state change," <a href="https://doi.org/10.1101/2024.01.18.576248">bioRxiv</a></li>
+        <li>Oral &amp; poster presentation, BPS 2024 — <a href="https://scholar.google.com/citations?view_op=view_citation&hl=en&user=QyKE_A0AAAAJ&citation_for_view=QyKE_A0AAAAJ:u_35RYKgDlwC">"A near-continuum model of morphodynamic single-cell states quantifying gene expression during epithelial–mesenchymal transitions"</a></li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Droplets within living cells</h2>
+      <p>Membraneless organelles within cells are often called cellular "condensates" or "droplets" — stress granules, germ granules, the nucleolus, nuclear speckles — which form through liquid–liquid phase separation (LLPS), driven by weak multivalent interactions among proteins, RNAs, and DNA. These condensates form and dissolve dynamically within the cytoplasm and nucleoplasm to perform functions like gene transcription, DNA replication and repair, and protein synthesis. Several diseases, including cancer, Huntington's disease, and ALS, are believed to stem from irreversibility or misregulation of these droplets; their regulation involves post-translational modifications such as residue phosphorylation and RNA-mediated feedback during transcription.</p>
+      <p>Open questions I'm interested in: why are condensates necessary for various biological functions? What protein/RNA/DNA composition gives rise to specific cellular functions? How do chemical reactions inside and outside droplets affect their size, location, and growth? What role does chromatin play in the formation, regulation, and disease relevance of cellular condensates? Coarse-grained and all-atom MD simulations can help unravel these questions.</p>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_f4e56b292c414a159c884dd0d888b329~mv2.png/v1/fill/w_600,h_272,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_f4e56b292c414a159c884dd0d888b329~mv2.png" alt="Schematic of a biomolecular condensate formed via liquid-liquid phase separation, and of a condensate near active chromatin" loading="lazy">
+      </div>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_ac76e1c7b90d421baf01c79c6789f353~mv2.png/v1/fill/w_492,h_417,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_ac76e1c7b90d421baf01c79c6789f353~mv2.png" alt="Flory exponent plotted against interaction energy between amino acid residues of the RNA Pol II C-terminal domain, showing the phase transition between dispersed and condensed phases" loading="lazy">
+        <figcaption>Flory exponent (FE) vs. interaction energy between CTD residues of RNA polymerase II — dispersed (FE &gt; 1/2) and condensed (FE &lt; 1/3) phases.</figcaption>
+      </div>
+      <p>This work is supported by the <a href="https://vacha.ceitec.cz/">Robert Vácha group</a> at Masaryk University, Brno, Czech Republic.</p>
+    </section>
+
+    <section class="section">
+      <h2>Transport across a potential barrier</h2>
+      <p>We simulated a binary mixture of colloidal particles subjected to an asymmetric external potential along the z-direction — a model system that may help explain transport across biological cell membranes.</p>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_002f5165c2e8451eb65b0b4047b258b6~mv2.png/v1/fill/w_309,h_198,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_002f5165c2e8451eb65b0b4047b258b6~mv2.png" alt="Simulation snapshot of a binary colloidal mixture under an asymmetric external potential" loading="lazy">
+      </div>
+      <ul class="pub-list">
+        <li>Published in <a href="https://doi.org/10.1088/1361-648X/abd428">J. Phys.: Condens. Matter 33, 125101 (2021)</a> — <a href="https://arxiv.org/abs/2006.07627">arXiv</a></li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>A coarse-grained model of quorum sensing</h2>
+      <p>We developed a model of dense active systems, where activity is introduced through a local density-dependent quorum-sensing scheme. Applying activity to the smaller particles of a binary colloidal mixture drives phase separation into solid-like and liquid-like regions. The stability of the solid-like phase turns out to come from minimal momentum transfer between active and passive particles in the phase-separation regime.</p>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_a786fccedfe44c5ba11496258e5ce1aa~mv2.png/v1/fill/w_396,h_286,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_a786fccedfe44c5ba11496258e5ce1aa~mv2.png" alt="Model system for dense active systems with local density-dependent quorum sensing" loading="lazy">
+      </div>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_6ef151436e8e4b12be312aaa6c970079~mv2.png/v1/fill/w_422,h_280,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_6ef151436e8e4b12be312aaa6c970079~mv2.png" alt="Phase separation of solid-like and liquid-like regions in the active binary colloidal mixture" loading="lazy">
+      </div>
+      <ul class="pub-list">
+        <li><a href="https://journals.aps.org/pre/abstract/10.1103/PhysRevE.101.022606">PRE 101, 022606 (2020)</a> — <a href="https://arxiv.org/abs/1910.13230">arXiv</a></li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Violation of Stokes–Einstein &amp; Stokes–Einstein–Debye relations in supercooled polymers</h2>
+      <p>During my graduate work, I studied coarse-grained simulations of polymer melts (linear and branched) in the glassy state, analyzed through statistical mechanics. We found that violations of the Stokes–Einstein and Stokes–Einstein–Debye relations in supercooled linear polymers — at the coexistence of dilute-gas and supercooled domains — arise from a disparity in the motion of fast and slow monomers. This may be relevant to aggregation in cellular environments caused by droplet misregulation, as above.</p>
+      <p>We also proposed a new relation between structural relaxation time and local density (the nearest-neighbor peak of the radial distribution function) in supercooled linear polymer melts and the Kob–Andersen binary mixture, as an alternative to the existing relation between the Debye–Waller factor and relaxation time.</p>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_8fa28c3219ec47389517787272413b0e~mv2.png/v1/fill/w_445,h_337,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_8fa28c3219ec47389517787272413b0e~mv2.png" alt="Simulation data on supercooled linear polymer melt dynamics" loading="lazy">
+      </div>
+      <div class="figure">
+        <img src="https://static.wixstatic.com/media/0c9d0f_ad397ba67b90479e915307bb0ec73cdb~mv2.png/v1/fill/w_439,h_337,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/0c9d0f_ad397ba67b90479e915307bb0ec73cdb~mv2.png" alt="Relation between structural relaxation time and local density near the glass transition" loading="lazy">
+      </div>
+      <ul class="pub-list">
+        <li><a href="https://doi.org/10.1088/1361-648X/abbbc4">J. Phys.: Condens. Matter 33, 055401 (2021)</a> — <a href="https://arxiv.org/abs/2001.02020">arXiv</a></li>
+        <li><a href="https://doi.org/10.1063/5.0016920">AIP Conference Proceedings 2265, 030220 (2020)</a></li>
+        <li>D. C. Thakur, Jalim Singh, Anna Varughese, Prasanth P. Jose, "Relation between local density and density relaxation near glass transition in a glass forming binary mixture," under review — <a href="https://arxiv.org/abs/2102.03070">arXiv</a></li>
+      </ul>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">© 2026 Jalim Singh. Built and maintained on <a href="https://github.com/directysj">GitHub</a>.</div>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>
