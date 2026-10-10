@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCA, Visually — projections, orthogonality, maximum variance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
+  --bg:#faf8f4;
+  --surface:#ffffff;
+  --surface2:#f2efe8;
+  --surface-elev:#ffffff;
+  --border:rgba(28,25,23,0.10);
+  --border-bright:rgba(28,25,23,0.22);
+  --text:#1c1917;
+  --text-dim:#78716c;
+  --accent:#0f766e;
+  --accent-dim:rgba(15,118,110,0.10);
+  --amber:#b45309;
+  --amber-dim:rgba(180,83,9,0.10);
+  --rose:#be123c;
+  --rose-dim:rgba(190,18,60,0.10);
+  --slate:#0369a1;
+  --slate-dim:rgba(3,105,161,0.10);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#131211;
+    --surface:#1c1a18;
+    --surface2:#242019;
+    --surface-elev:#201d1a;
+    --border:rgba(250,248,244,0.09);
+    --border-bright:rgba(250,248,244,0.22);
+    --text:#ece8e2;
+    --text-dim:#a39d94;
+    --accent:#2dd4bf;
+    --accent-dim:rgba(45,212,191,0.12);
+    --amber:#f5a524;
+    --amber-dim:rgba(245,165,36,0.12);
+    --rose:#fb7185;
+    --rose-dim:rgba(251,113,133,0.12);
+    --slate:#7dd3fc;
+    --slate-dim:rgba(125,211,252,0.12);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;padding:32px 40px 80px;
+  font-family:var(--font-body);color:var(--text);background:var(--bg);
+  background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);
+  background-size:26px 26px;
+  overflow-wrap:break-word;
+  line-height:1.55;
+}
+.wrap{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:168px 1fr;gap:0 44px}
+.main{min-width:0}
+
+/* ---------- TOC ---------- */
+.toc{position:sticky;top:24px;align-self:start;padding:14px 0;grid-row:1/-1;max-height:calc(100dvh - 48px);overflow-y:auto}
+.toc-title{font-family:var(--font-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);padding:0 0 10px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.toc a{display:block;font-size:11px;color:var(--text-dim);text-decoration:none;padding:4px 8px;border-radius:5px;border-left:2px solid transparent;transition:all .15s;line-height:1.4;margin-bottom:1px}
+.toc a:hover{color:var(--text);background:var(--surface2)}
+.toc a.active{color:var(--text);border-left-color:var(--accent)}
+
+/* ---------- Hero ---------- */
+.hero{padding:26px 0 8px;margin-bottom:18px}
+.hero__kicker{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+.hero h1{font-size:clamp(30px,4.2vw,46px);line-height:1.08;font-weight:700;letter-spacing:-1px;margin:0 0 14px}
+.hero .lead{font-size:17.5px;max-width:66ch;color:var(--text);margin:0 0 18px}
+.hero .lead em{color:var(--text-dim);font-style:normal}
+.hero__chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--font-mono);font-size:10.5px;font-weight:500;padding:4px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text-dim)}
+.chip b{color:var(--text);font-weight:600}
+
+/* ---------- Section heads ---------- */
+.sec-head{display:flex;align-items:baseline;gap:14px;margin:52px 0 18px;scroll-margin-top:24px;border-top:1px solid var(--border);padding-top:30px}
+.sec-head__num{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:6px;padding:3px 8px}
+.sec-head h2{font-size:clamp(21px,2.6vw,28px);font-weight:700;letter-spacing:-.4px;margin:0}
+.sec-sub{color:var(--text-dim);font-size:14.5px;max-width:70ch;margin:-6px 0 20px}
+
+/* ---------- Cards ---------- */
+.ve-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;min-width:0}
+.ve-card__label{font-family:var(--font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ve-card__label::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0}
+.ve-card--amber .ve-card__label{color:var(--amber)}
+.ve-card--rose .ve-card__label{color:var(--rose)}
+.ve-card--slate .ve-card__label{color:var(--slate)}
+.ve-card p{font-size:13.5px;margin:0 0 10px}
+.ve-card p:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* ---------- Interactive controls ---------- */
+.controls{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px}
+@media(max-width:860px){.controls{grid-template-columns:1fr}}
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row label{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;background:var(--surface2);border:1px solid var(--border);border-radius:3px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:17px;height:17px;border-radius:50%;background:var(--amber);border:2px solid var(--surface);margin-top:-7px;box-shadow:0 0 0 1px var(--border-bright)}
+input[type=range]::-moz-range-track{height:5px;background:var(--surface2);border:1px solid var(--border);border-radius:3px}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--amber);border:2px solid var(--surface)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+button.ve-btn{font-family:var(--font-mono);font-size:11.5px;font-weight:600;padding:7px 13px;border-radius:7px;border:1px solid var(--border-bright);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s}
+button.ve-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.12)}
+button.ve-btn--accent{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+button.ve-btn--amber{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+.readouts{display:flex;flex-direction:column;gap:8px;justify-content:center}
+.readout{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);border-bottom:1px dashed var(--border);padding-bottom:6px}
+.readout b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}
+.readout b.is-pc{color:var(--amber)}
+.checks{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.checks label{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);display:flex;gap:6px;align-items:center;cursor:pointer}
+
+/* ---------- SVG figure cards ---------- */
+.fig{margin-bottom:16px;overflow:hidden}
+.fig svg{display:block;width:100%;height:auto}
+.fig-cap{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.6;border-top:1px solid var(--border);padding:10px 16px 0;margin-top:12px}
+.fig-cap b{color:var(--text)}
+
+/* SVG element classes */
+.plot-bg{fill:var(--surface2)}
+.grid-line{stroke:var(--border);stroke-width:.6}
+.axis{stroke:var(--border-bright);stroke-width:1}
+.axis-lab{font-family:var(--font-mono);font-size:11px;fill:var(--text-dim)}
+.axis-lab-strong{font-family:var(--font-mono);font-size:12px;font-weight:600;fill:var(--text)}
+.pt{fill:var(--slate);fill-opacity:.75;stroke:var(--surface);stroke-width:.8}
+.pt-hl{stroke:var(--rose);stroke-width:2;fill:var(--rose)}
+.proj-line{stroke:var(--text-dim);stroke-width:.7;stroke-dasharray:2 3;opacity:.45}
+.proj-dot{fill:var(--accent);fill-opacity:.9}
+.dir-line{stroke:var(--amber);stroke-width:1.6}
+.dir-line.is-pc1{stroke:var(--rose);stroke-width:2.2}
+.varbar{stroke:var(--amber);stroke-width:11;stroke-linecap:round;opacity:.22}
+.varbar.is-pc1{stroke:var(--rose)}
+.pc1-line{stroke:var(--rose);stroke-width:1.4;stroke-dasharray:7 4;opacity:.9}
+.pc2-line{stroke:var(--accent);stroke-width:1.4;stroke-dasharray:7 4;opacity:.9}
+.ell{fill:none;stroke:var(--text-dim);stroke-width:1;stroke-dasharray:4 4;opacity:.8}
+.ell-fill{fill:var(--accent-dim);stroke:none}
+.curve{fill:none;stroke:var(--amber);stroke-width:2}
+.curve-fill{fill:var(--amber-dim);stroke:none}
+.gline{stroke:var(--border-bright);stroke-width:1;stroke-dasharray:3 4}
+.glab{font-family:var(--font-mono);font-size:10px;fill:var(--text-dim)}
+.glamp{font-family:var(--font-mono);font-size:10.5px;font-weight:600;fill:var(--rose)}
+.glamn{font-family:var(--font-mono);font-size:10.5px;font-weight:600;fill:var(--accent)}
+.hi-ring{fill:none;stroke:var(--rose);stroke-width:2.2}
+.hi-lab{font-family:var(--font-mono);font-size:10.5px;font-weight:600;fill:var(--rose)}
+.bar{fill:var(--accent)}
+.bar--tail{fill:var(--text-dim);fill-opacity:.35}
+.cum{fill:none;stroke:var(--amber);stroke-width:2}
+.cum-pt{fill:var(--amber)}
+.cl-a{fill:var(--accent);fill-opacity:.85;stroke:var(--surface);stroke-width:.7}
+.cl-b{fill:var(--amber);fill-opacity:.85;stroke:var(--surface);stroke-width:.7}
+.cl-c{fill:var(--rose);fill-opacity:.85;stroke:var(--surface);stroke-width:.7}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);padding:8px 16px 0}
+.legend .sw{width:10px;height:10px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:5px}
+
+/* math card */
+.math-box{font-family:var(--font-mono);font-size:13px;line-height:1.9;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.math-box .hl-a{color:var(--rose);font-weight:600}
+.math-box .hl-b{color:var(--accent);font-weight:600}
+
+/* hover panels s3 */
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.dual{grid-template-columns:1fr}}
+.pt-sm{fill:var(--slate);fill-opacity:.7;stroke:var(--surface);stroke-width:.8}
+.pt-sm-hl{fill:var(--rose);stroke:var(--rose);stroke-width:2.4}
+.sample-info{font-family:var(--font-mono);font-size:12.5px;line-height:1.8;margin-top:0}
+.sample-info .k{color:var(--text-dim)}
+.sample-info .v{font-weight:600}
+.tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border-bright);border-radius:7px;padding:6px 10px;font-family:var(--font-mono);font-size:11px;color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,.15);opacity:0;transition:opacity .12s;white-space:nowrap;z-index:20}
+.figwrap{position:relative}
+
+/* loadings */
+.load-row{display:grid;grid-template-columns:110px 1fr 54px;gap:10px;align-items:center;font-family:var(--font-mono);font-size:11.5px;margin-bottom:7px}
+.load-name{color:var(--text-dim);text-align:right}
+.load-track{height:14px;background:var(--surface2);border-radius:3px;position:relative;overflow:hidden}
+.load-bar{position:absolute;top:0;bottom:0;border-radius:3px}
+.load-bar--pos{background:var(--accent)}
+.load-bar--neg{background:var(--rose)}
+.load-val{color:var(--text);font-variant-numeric:tabular-nums}
+
+/* callouts */
+.callout{padding:15px 19px;border-radius:9px;border-left:4px solid var(--callout-border);background:var(--callout-bg);margin:18px 0;font-size:13.5px}
+.callout--info{--callout-border:var(--accent);--callout-bg:color-mix(in srgb,var(--accent) 9%,transparent)}
+.callout--warn{--callout-border:var(--amber);--callout-bg:color-mix(in srgb,var(--amber) 10%,transparent)}
+.callout__title{font-weight:600;margin-bottom:6px;color:var(--callout-border)}
+.callout p{margin:0}
+.callout ul{padding-left:1.5em;margin:8px 0 0}
+.callout li{margin-bottom:5px}
+
+/* animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.ve-card,.fig{animation:fadeUp .4s ease-out both;animation-delay:calc(var(--i,0)*.05s)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+@media(max-width:1000px){
+  body{padding:16px 18px 60px}
+  .wrap{grid-template-columns:1fr;gap:0}
+  .toc{position:sticky;top:0;z-index:200;max-height:none;display:flex;gap:4px;align-items:center;overflow-x:auto;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0;margin:0 -18px;padding-left:18px;padding-right:18px;grid-row:auto}
+  .toc::-webkit-scrollbar{display:none}
+  .toc-title{display:none}
+  .toc a{white-space:nowrap;flex-shrink:0;border-left:none;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;padding:6px 10px;font-size:10.5px}
+  .toc a.active{border-left:none;border-bottom-color:var(--accent);background:var(--surface)}
+  .sec-head{scroll-margin-top:56px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" id="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#s1">1 · Maximum variance</a>
+  <a href="#s2">2 · Orthogonality</a>
+  <a href="#s3">3 · Same dots, new axes</a>
+  <a href="#s4">4 · 100 features &rarr; 2</a>
+  <a href="#s5">5 · Reading the plot</a>
+</nav>
+<div class="main">
+
+<header class="hero">
+  <div class="hero__kicker">Principal Component Analysis</div>
+  <h1>PCA, visually.</h1>
+  <p class="lead">Three questions, answered with pictures rather than algebra: what does <em>&ldquo;maximum variance along PC1&rdquo;</em> actually mean, why are the principal components <em>guaranteed</em> to be orthogonal, and what does <em>each dot</em> in a PC1&nbsp;vs&nbsp;PC2 scatter plot tell you about a data sample?</p>
+  <div class="hero__chips">
+    <span class="chip">Interactive &mdash; drag, hover, click</span>
+    <span class="chip">Example: <b>100 features &rarr; 2 PCs</b></span>
+  </div>
+</header>
+
+<!-- ================= SECTION 1 ================= -->
+<div class="sec-head" id="s1"><span class="sec-head__num">01</span><h2>What &ldquo;maximum variance along PC1&rdquo; means</h2></div>
+<p class="sec-sub">Take a 2-feature cloud (the same idea holds in 100 dimensions). A &ldquo;direction&rdquo; is a line through the middle of the data. Every sample can be <b>projected</b> onto that line &mdash; it collapses to a single number, its score. PCA asks: which direction makes those projected scores spread out the most? <b>Drag the slider and watch.</b></p>
+
+<div class="ve-card fig" style="--i:0">
+  <div class="ve-card__label">Interactive &mdash; rotate the projection direction</div>
+  <div class="controls">
+    <div>
+      <div class="slider-row">
+        <label>direction &theta;</label>
+        <input type="range" id="ang" min="0" max="180" step="0.25" value="10" aria-label="projection direction angle">
+        <label id="ang-read" style="width:52px;text-align:right">10&deg;</label>
+      </div>
+      <div class="btn-row">
+        <button class="ve-btn ve-btn--amber" id="btn-pc1">Snap to PC1</button>
+        <button class="ve-btn ve-btn--accent" id="btn-pc2">Snap to PC2</button>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="ck-proj" checked> projected dots</label>
+        <label><input type="checkbox" id="ck-drop" checked> perpendicular drops</label>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="readout"><span>projected spread &sigma;(&theta;)</span><b id="ro-sigma">&ndash;</b></div>
+      <div class="readout"><span>variance &sigma;&sup2; &nbsp;(share of max)</span><b id="ro-var">&ndash;</b></div>
+      <div class="readout"><span>reference: PC1 &sigma;&sup2;</span><b id="ro-pc1">&ndash;</b></div>
+    </div>
+  </div>
+  <div class="figwrap">
+    <svg id="cloud-svg" viewBox="0 0 560 440" role="img" aria-label="Scatter cloud with rotatable projection direction"></svg>
+    <div class="fig-cap" id="cloud-cap"></div>
+  </div>
+</div>
+
+<div class="ve-card fig" style="--i:1">
+  <div class="ve-card__label">Variance as a function of direction</div>
+  <div class="figwrap">
+    <svg id="var-svg" viewBox="0 0 560 200" role="img" aria-label="Projected variance versus direction angle"></svg>
+    <div class="fig-cap">The same thing, one dimension up: <b>variance of the projected scores</b> plotted against the direction angle &theta;. It peaks exactly at PC1&rsquo;s angle (rose dashed) and bottoms out at PC2 (teal dashed). Every other direction is somewhere in between &mdash; PCA simply picks the peak. In this 2-feature example <span class="mono" id="var-pc-share"></span></div>
+  </div>
+</div>
+
+<div class="callout callout--info">
+  <div class="callout__title">So &ldquo;maximum variance&rdquo; = &ldquo;best summary line&rdquo;</div>
+  <p>One direction is better than another when the projected samples spread out more on it &mdash; because then the scores genuinely distinguish the samples from each other. The same direction is also the line that passes closest to all the points (least perpendicular error). Maximizing variance kept and minimizing information thrown away are two views of the same optimum, which is why keeping the top PCs is the least-distorting compression of the data.</p>
+</div>
+
+<!-- ================= SECTION 2 ================= -->
+<div class="sec-head" id="s2"><span class="sec-head__num">02</span><h2>Orthogonality is built in, not luck</h2></div>
+<p class="sec-sub">Once PC1 is found, PC2 is defined as the variance-maximizing direction <b>subject to being uncorrelated with PC1</b> &mdash; and &ldquo;uncorrelated scores&rdquo; means the weight vectors are perpendicular. The right angle you see below is guaranteed by the eigendecomposition of the covariance matrix.</p>
+
+<div class="ve-card fig" style="--i:0">
+  <div class="ve-card__label">The two principal components of the cloud</div>
+  <div class="figwrap">
+    <svg id="ortho-svg" viewBox="0 0 560 400" role="img" aria-label="Data cloud with PC1 and PC2 axes and one-sigma ellipse"></svg>
+    <div class="fig-cap"><b>PC1 (rose)</b> is the long axis of the 1&sigma; ellipse; <b>PC2 (teal)</b> is the short one &mdash; exactly 90&deg; apart. The data cloud is an ellipsoid in high dimensions; the PCs are its axes.</div>
+  </div>
+</div>
+
+<div class="grid2" style="margin-bottom:16px">
+  <div class="ve-card" style="--i:1">
+    <div class="ve-card__label">The numbers behind this cloud</div>
+    <p>The covariance matrix of the data, and what PCA computes from it:</p>
+    <div class="math-box" id="eig-nums"></div>
+  </div>
+  <div class="ve-card" style="--i:2">
+    <div class="ve-card__label">Why the eigenvectors must be perpendicular</div>
+    <p><b>1 &middot; Symmetry.</b> The covariance matrix C is symmetric (cov of feature A with B = cov of B with A). The <b>spectral theorem</b> says every real symmetric matrix has a full set of mutually orthogonal eigenvectors. PCA just takes those eigenvectors, ordered by eigenvalue.</p>
+    <p><b>2 &middot; Constraint.</b> PC2 maximizes variance <i>subject to</i> w₂&middot;w₁&nbsp;=&nbsp;0. Zero dot product <i>is</i> the definition of perpendicular. It&rsquo;s not that orthogonality emerges &mdash; it&rsquo;s imposed at every step, then the Lagrange-multiplier math hands you back an eigenvector.</p>
+    <p><b>3 &middot; SVD.</b> Libraries actually compute X&nbsp;=&nbsp;U&Sigma;Vᵞ; the columns of V are the PCs, and SVD produces orthonormal columns by construction.</p>
+  </div>
+</div>
+
+<div class="callout callout--warn">
+  <div class="callout__title">One edge case: equal eigenvalues</div>
+  <p>If two eigenvalues are exactly equal (e.g. isotropic, noise-like data), the PCs inside that subspace are not unique &mdash; any rotation of them explains the same variance. You can still always <i>choose</i> them orthogonal, but which particular pair a library returns is arbitrary. Well-separated eigenvalues &rarr; unique, stable PCs.</p>
+</div>
+
+<!-- ================= SECTION 3 ================= -->
+<div class="sec-head" id="s3"><span class="sec-head__num">03</span><h2>Same dots, new coordinates</h2></div>
+<p class="sec-sub">PCA is a <b>rotation</b>, not a selection: no samples are dropped. Each dot on the left is one sample with coordinates (x₁,&nbsp;x₂); the <i>same</i> sample on the right has coordinates (PC1,&nbsp;PC2) &mdash; its projections onto the two new axes. <b>Hover or click any dot.</b></p>
+
+<div class="dual">
+  <div class="ve-card fig" style="--i:0">
+    <div class="ve-card__label">Original feature space</div>
+    <div class="figwrap">
+      <svg id="orig-svg" viewBox="0 0 460 380" role="img" aria-label="Data in original feature coordinates"></svg>
+      <div class="fig-cap">Axes = the measured features. The dashed rose/teal lines show where the new PC axes will go.</div>
+    </div>
+  </div>
+  <div class="ve-card fig" style="--i:1">
+    <div class="ve-card__label">Principal component space</div>
+    <div class="figwrap">
+      <svg id="pc-svg" viewBox="0 0 460 380" role="img" aria-label="Same data as PC scores"></svg>
+      <div class="fig-cap">Axes = PC1 / PC2 scores. The faint dashed cross shows where the <i>old</i> feature axes ended up after the rotation.</div>
+    </div>
+  </div>
+</div>
+
+<div class="ve-card" style="--i:2;margin-top:16px">
+  <div class="ve-card__label">Selected sample</div>
+  <div class="sample-info" id="sample-info">Hover a dot&hellip;</div>
+</div>
+
+<div class="callout callout--info">
+  <div class="callout__title">So what does a dot in a PC1 vs PC2 plot mean?</div>
+  <p>It is one <b>sample</b> (row) of your data &mdash; the same patient / image / customer as before &mdash; summarized by two numbers instead of 100: where it sits along the dataset&rsquo;s biggest pattern (PC1) and its second-biggest, independent pattern (PC2). Dots that cluster together are samples whose 100 features behaved similarly; a far-out dot is an unusual sample.</p>
+</div>
+
+<!-- ================= SECTION 4 ================= -->
+<div class="sec-head" id="s4"><span class="sec-head__num">04</span><h2>Your actual case: 100 features &rarr; 2 PCs</h2></div>
+<p class="sec-sub">Below: a synthetic dataset of <b>150 samples &times; 100 features</b>, standardized, then reduced to 2 PCs &mdash; exactly the pipeline you described. The samples come from three hidden groups (shown by color). Note that PCA never saw those labels.</p>
+
+<div class="ve-card fig" style="--i:0">
+  <div class="ve-card__label">Scree plot &mdash; how much variance each PC keeps</div>
+  <div class="figwrap">
+    <svg id="scree-svg" viewBox="0 0 560 300" role="img" aria-label="Scree plot of variance explained"></svg>
+    <div class="fig-cap">Variance explained per PC (bars) and cumulative (line). The first two PCs alone keep <b>32%</b> of the total variance of all 100 features; the remaining 98 PCs each carry little.</div>
+  </div>
+</div>
+
+<div class="ve-card fig" style="--i:1">
+  <div class="ve-card__label">The PC1 vs PC2 scatter you would plot</div>
+  <div class="figwrap">
+    <svg id="hd-svg" viewBox="0 0 560 420" role="img" aria-label="PC1 versus PC2 scatter of 150 samples"></svg>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent)"></span>Group A</span>
+      <span><span class="sw" style="background:var(--amber)"></span>Group B</span>
+      <span><span class="sw" style="background:var(--rose)"></span>Group C</span>
+      <span style="opacity:.75">&mdash; labels PCA never saw</span>
+    </div>
+    <div class="fig-cap"><b>Hover a dot</b> &mdash; every dot is one sample&rsquo;s 100 features compressed to two numbers. The three groups separate along PC1/PC2 because between-group differences are the largest source of variance. <b>Hover the dots to see sample numbers.</b></div>
+  </div>
+</div>
+
+<!-- ================= SECTION 5 ================= -->
+<div class="sec-head" id="s5"><span class="sec-head__num">05</span><h2>Reading the plot &mdash; and what PC1 is made of</h2></div>
+<p class="sec-sub">PC1 is a linear combination of the original features with learned weights (the <b>loadings</b>). For the dataset above, the six features with the largest PC1 weights:</p>
+
+<div class="ve-card" style="--i:0;margin-bottom:16px">
+  <div class="ve-card__label">PC1 loadings (feature weights)</div>
+  <div id="loadings"></div>
+  <p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;font-family:var(--font-mono)">PC1 &asymp; <span id="pc1-formula"></span></p>
+</div>
+
+<div class="grid3" style="margin-bottom:16px">
+  <div class="ve-card ve-card--rose" style="--i:1">
+    <div class="ve-card__label">Distances are approximate</div>
+    <p>The 2D plot faithfully preserves only what PC1+PC2 capture (32% here). Two samples far apart on screen are genuinely different; but two samples that look close might differ on PC3+.</p>
+  </div>
+  <div class="ve-card ve-card--amber" style="--i:2">
+    <div class="ve-card__label">Standardize first</div>
+    <p>Variance is unit-dependent. Without standardization, one feature measured on a large scale can dominate PC1 all by itself &mdash; and you&rsquo;ve merely rediscovered that feature, not a pattern.</p>
+  </div>
+  <div class="ve-card ve-card--slate" style="--i:3">
+    <div class="ve-card__label">Axes are unsupervised</div>
+    <p>Nothing guarantees PC1/PC2 align with your class labels or outcome. Sometimes the structure you care about lives on PC5 &mdash; or in none of them. Check the scree plot before trusting the picture.</p>
+  </div>
+</div>
+
+<div class="callout callout--info">
+  <div class="callout__title">Quick reference</div>
+  <ul>
+    <li><b>Each dot</b> = one sample (row) of the original data &mdash; nothing is averaged or dropped.</li>
+    <li><b>Dot position</b> = that sample&rsquo;s scores on the two highest-variance patterns of all 100 features.</li>
+    <li><b>Clusters</b> = groups of samples that behave similarly across the features; <b>outliers</b> = atypical samples.</li>
+    <li><b>PCs</b> = orthogonal linear combinations of the features; PC1 maximizes projected variance, each next PC maximizes what&rsquo;s left under the orthogonality constraint.</li>
+    <li><b>Loadings</b> = the per-feature weights that tell you which features drive each axis.</li>
+  </ul>
+</div>
+
+</div><!-- /main -->
+</div><!-- /wrap -->
+
+<script>
+"use strict";
+const PAYLOAD = {"d2":{"points":[[0.773,-0.971],[2.661,0.961],[-2.574,-0.713],[-6.101,-5.211],[-2.872,-2.97],[-5.044,-8.041],[0.447,0.307],[10.297,6.412],[-5.573,-0.062],[-5.567,-1.946],[3.517,2.659],[1.338,3.505],[1.354,-0.193],[-8.477,-2.751],[-0.198,-0.174],[3.89,5.186],[-7.229,-10.398],[-3.864,-1.743],[-10.47,-14.393],[-5.512,-11.796],[-12.518,-10.901],[-0.061,-3.359],[-9.282,-6.648],[-2.084,6.633],[2.597,-1.032],[-0.212,-2.462],[-18.216,-13.476],[-4.701,-1.858],[-0.029,-0.672],[1.171,0.157],[-12.106,-6.873],[-4.317,-1.459],[-5.094,-7.784],[-5.595,-4.663],[7.461,5.959],[-3.844,-6.884],[-0.695,0.414],[7.804,2.94],[-5.874,-1.012],[-1.136,-0.178],[0.624,0.816],[1.508,-0.997],[-8.476,-7.059],[4.107,-4.143],[11.657,4.944],[-11.62,-7.743],[9.895,-0.102],[-0.665,2.596],[-1.432,-7.545],[12.836,12.814],[6.916,2.291],[-9.896,-4.865],[0.295,0.712],[6.834,-0.317],[-3.569,1.809],[2.269,7.079],[-0.354,-0.519],[5.221,3.071],[10.488,7.605],[-3.051,-5.972],[-0.521,3.636],[-2.317,-3.808],[0.994,0.588],[-7.003,-8.391],[-2.991,-4.641],[0.89,-4.007],[4.13,7.853],[8.397,5.993],[-11.111,-5.126],[-5.659,-4.373],[5.828,1.998],[-13.547,-11.786],[-2.285,-3.847],[-0.704,-0.521],[9.585,6.107],[5.425,3.135],[0.141,-4.963],[-1.173,-3.886],[-4.728,2.394],[12.003,6.908]]},"hd":{"scores":[[-4.914,2.288],[-5.516,4.283],[-5.06,3.766],[-4.823,3.303],[-3.9,6.455],[-4.183,3.241],[-4.61,4.323],[-4.711,2.265],[-2.975,3.795],[-5.134,2.184],[-3.452,2.968],[-4.475,2.514],[-2.143,1.256],[-3.284,0.851],[-4.828,1.723],[-3.703,3.756],[-5.123,3.254],[-5.219,3.536],[-6.197,2.406],[-4.715,3.031],[-4.833,3.257],[-2.925,2.695],[-2.975,2.163],[-2.993,0.811],[-3.821,1.704],[-5.939,3.666],[-4.05,1.885],[-3.881,3.921],[-5.687,2.004],[-5.818,1.823],[-5.416,2.637],[-3.941,3.548],[-3.147,3.841],[-4.456,2.89],[-4.296,3.668],[-5.872,4.049],[-6.281,3.03],[-5.793,3.191],[-5.016,1.401],[-6.164,3.734],[-4.783,1.828],[-3.891,0.619],[-4.492,4.501],[-2.894,2.192],[-6.21,3.241],[-5.573,5.304],[-3.328,2.871],[-4.605,4.073],[-4.329,2.023],[-4.956,4.222],[-0.473,-6.539],[-0.862,-5.705],[1.851,-4.741],[-1.212,-5.159],[-0.478,-4.702],[-0.371,-4.764],[-2.606,-3.617],[1.045,-4.821],[-4.597,-4.038],[0.99,-6.248],[-1.608,-3.395],[0.541,-5.627],[-1.542,-5.131],[-0.72,-5.9],[-0.226,-4.963],[1.301,-6.953],[0.491,-4.004],[-0.249,-4.434],[-1.23,-5.213],[0.083,-3.425],[0.674,-5.315],[1.618,-4.488],[-0.087,-6.5],[-0.187,-5.412],[-0.5,-6.326],[-1.086,-4.301],[0.943,-5.512],[-1.6,-7.391],[-2.133,-5.628],[-0.587,-2.965],[-1.414,-5.407],[-0.849,-4.942],[-0.139,-5.411],[0.649,-6.217],[-0.821,-4.776],[-0.085,-6.2],[-0.963,-5.6],[-0.43,-5.158],[0.143,-5.194],[-1.082,-6.329],[-0.663,-6.62],[-0.569,-8.206],[-0.392,-5.701],[0.491,-5.992],[-0.226,-4.08],[0.258,-5.818],[-1.615,-3.325],[0.694,-5.118],[-1.292,-7.818],[-0.071,-5.232],[4.732,2.959],[3.771,2.737],[3.967,2.691],[4.761,3.337],[5.806,2.544],[6.267,2.681],[6.13,3.249],[5.224,1.219],[2.899,1.597],[6.112,1.363],[5.83,1.163],[5.589,2.725],[6.899,2.8],[5.614,1.325],[5.948,0.379],[3.213,1.687],[3.364,1.367],[5.732,3.396],[4.784,2.087],[5.641,1.509],[5.16,3.474],[4.506,1.582],[4.863,2.291],[3.092,1.526],[5.09,1.814],[4.489,3.355],[5.007,2.87],[4.666,2.184],[4.146,3.673],[3.867,1.371],[4.606,2.557],[6.34,3.592],[4.835,2.601],[6.152,0.194],[5.461,2.213],[5.622,3.101],[6.273,0.958],[6.191,2.62],[4.181,2.239],[5.918,2.258],[3.4,3.211],[4.878,3.8],[5.58,1.768],[3.735,5.103],[4.642,0.93],[5.083,1.674],[3.261,4.143],[4.091,1.914],[5.649,3.311],[5.453,3.229]],"labels":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],"evr":[0.1627,0.15428,0.02387,0.02205,0.02107,0.02025,0.01958,0.01909,0.01834,0.01802,0.01735,0.01644,0.01594,0.01538,0.01523],"cum":[0.1627,0.31698,0.34085,0.3629,0.38397,0.40422,0.4238,0.44289,0.46123,0.47925,0.4966,0.51304,0.52898,0.54436,0.55959],"tail":0.44041,"loadings":[{"f":2,"w":0.207},{"f":8,"w":0.201},{"f":65,"w":0.192},{"f":29,"w":0.186},{"f":83,"w":-0.179},{"f":92,"w":-0.179}]}};
+
+/* ============ helpers ============ */
+const $ = (id) => document.getElementById(id);
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const fmt = (n, d=1) => n.toFixed(d);
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============ PCA of the 2D demo cloud ============ */
+const P = PAYLOAD.d2.points;
+const N = P.length;
+let mx=0, my=0;
+for (const p of P){ mx+=p[0]; my+=p[1]; }
+mx/=N; my/=N;
+let cxx=0, cyy=0, cxy=0;
+for (const p of P){ const cx=p[0]-mx, cy=p[1]-my; cxx+=cx*cx; cyy+=cy*cy; cxy+=cx*cy; }
+cxx/=N; cyy/=N; cxy/=N;
+
+const tr = cxx+cyy, disc = Math.sqrt(Math.max(0,(cxx-cyy)*(cxx-cyy)/4 + cxy*cxy));
+const l1 = tr/2 + disc, l2 = tr/2 - disc;
+let w1;
+if (Math.abs(cxy) > 1e-12){
+  let vx=cxy, vy=l1-cxx; const nrm=Math.hypot(vx,vy)||1; w1=[vx/nrm, vy/nrm];
+} else {
+  w1 = cxx>=cyy ? [1,0] : [0,1];
+}
+const w2 = [-w1[1], w1[0]];
+const th1 = ((Math.atan2(w1[1], w1[0]) * 180/Math.PI) + 360) % 180; // PC1 angle in [0,180)
+const th2 = (th1 + 90) % 180;
+const varAt = (deg) => {
+  const r = deg*Math.PI/180, d = r - Math.atan2(w1[1], w1[0]);
+  return l1*Math.cos(d)**2 + l2*Math.sin(d)**2;
+};
+
+/* scores for section 3 */
+const scores = P.map(p => {
+  const cx=p[0]-mx, cy=p[1]-my;
+  return [cx*w1[0]+cy*w1[1], cx*w2[0]+cy*w2[1]];
+});
+
+/* ============ SECTION 1: interactive projection ============ */
+const CW=560, CH=440, CX=280, CY=214, S=7.4;
+const cloud = $("cloud-svg");
+
+/* defs: grid + arrowhead */
+const defs = el("defs", {}, cloud);
+const pat = el("pattern", {id:"gridp", width:28, height:28, patternUnits:"userSpaceOnUse"}, defs);
+el("path", {d:"M28 0H0V28", fill:"none", class:"grid-line"}, pat);
+const mk = el("marker", {id:"arr", viewBox:"0 0 10 10", refX:"8.5", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"}, defs);
+el("path", {d:"M0 0L10 5L0 10z", fill:"var(--amber)"}, mk);
+const mkg = el("marker", {id:"arrg", viewBox:"0 0 10 10", refX:"8.5", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"}, defs);
+el("path", {d:"M0 0L10 5L0 10z", fill:"var(--border-bright)"}, mkg);
+
+el("rect", {x:16, y:14, width:CW-32, height:CH-42, class:"plot-bg"}, cloud);
+el("rect", {x:16, y:14, width:CW-32, height:CH-42, fill:"url(#gridp)"}, cloud);
+
+/* faint PC axes for reference */
+const L=205;
+const pc1line = el("line", {x1:CX-L*w1[0], y1:CY+L*w1[1], x2:CX+L*w1[0], y2:CY-L*w1[1], class:"pc1-line"}, cloud);
+const pc2line = el("line", {x1:CX-L*w2[0], y1:CY+L*w2[1], x2:CX+L*w2[0], y2:CY-L*w2[1], class:"pc2-line"}, cloud);
+const pc1lab = el("text", {x:CX+(L+6)*w1[0], y:CY-(L+6)*w1[1]+4, class:"glamp", "text-anchor":"middle"}, cloud);
+pc1lab.textContent = "PC1 (" + fmt(th1,0) + "\u00B0)";
+const pc2lab = el("text", {x:CX+(L+10)*w2[0], y:CY-(L+10)*w2[1]+4, class:"glamn", "text-anchor":"middle"}, cloud);
+pc2lab.textContent = "PC2";
+
+/* dynamic groups */
+const varbar = el("line", {class:"varbar"}, cloud);
+const dirline = el("line", {class:"dir-line", "marker-start":"url(#arr)", "marker-end":"url(#arr)"}, cloud);
+const gDrop = el("g", {}, cloud);
+const gProj = el("g", {}, cloud);
+const gPts  = el("g", {}, cloud);
+
+const drops = [], projs = [], ptsEls = [];
+for (let i=0;i<N;i++){
+  const p = P[i];
+  ptsEls.push(el("circle", {cx:CX+(p[0]-mx)*S, cy:CY-(p[1]-my)*S, r:3.4, class:"pt"}, gPts));
+  drops.push(el("line", {class:"proj-line"}, gDrop));
+  projs.push(el("circle", {r:3.0, class:"proj-dot"}, gProj));
+}
+el("text", {x:CX, y:CH-10, class:"axis-lab", "text-anchor":"middle"}, cloud)
+  .textContent = "each grey dot = one sample  \u00B7  each teal dot = its projection onto the amber direction";
+
+let curAngle = 10;
+function updateS1(){
+  const a = curAngle;
+  const r = a*Math.PI/180;
+  const w = [Math.cos(r), Math.sin(r)];
+  /* variance of projections */
+  let v = 0;
+  for (const p of P){ const t=(p[0]-mx)*w[0] + (p[1]-my)*w[1]; v += t*t; }
+  v /= N;
+  const sg = Math.sqrt(v);
+  /* direction line + spread bar */
+  dirline.setAttribute("x1", CX-L*w[0]); dirline.setAttribute("y1", CY+L*w[1]);
+  dirline.setAttribute("x2", CX+L*w[0]); dirline.setAttribute("y2", CY-L*w[1]);
+  varbar.setAttribute("x1", CX-sg*S*w[0]); varbar.setAttribute("y1", CY+sg*S*w[1]);
+  varbar.setAttribute("x2", CX+sg*S*w[0]); varbar.setAttribute("y2", CY-sg*S*w[1]);
+  /* per-point projections */
+  for (let i=0;i<N;i++){
+    const p=P[i], cx0=p[0]-mx, cy0=p[1]-my;
+    const t = cx0*w[0] + cy0*w[1];
+    const px = CX + t*S*w[0], py = CY - t*S*w[1];
+    drops[i].setAttribute("x1", CX+cx0*S); drops[i].setAttribute("y1", CY-cy0*S);
+    drops[i].setAttribute("x2", px); drops[i].setAttribute("y2", py);
+    projs[i].setAttribute("cx", px); projs[i].setAttribute("cy", py);
+  }
+  /* readouts */
+  $("ang-read").innerHTML = fmt(a, a<10?1:0) + "&deg;";
+  $("ro-sigma").textContent = fmt(sg,2);
+  $("ro-var").textContent = fmt(v,1) + "  (" + fmt(v/l1*100,0) + "%)";
+  $("ro-pc1").textContent = fmt(l1,1);
+  const near = Math.min(Math.abs(a-th1), Math.abs(a-th1+180), Math.abs(a-th1-180)) < 0.75;
+  const near2 = Math.min(Math.abs(a-th2), Math.abs(a-th2+180), Math.abs(a-th2-180)) < 0.75;
+  dirline.classList.toggle("is-pc1", near);
+  varbar.classList.toggle("is-pc1", near);
+  $("ro-sigma").classList.toggle("is-pc", near);
+  $("cloud-cap").innerHTML = near
+    ? "<b>&theta; = " + fmt(th1,1) + "&deg; &mdash; this is PC1.</b> The spread bar is at its longest possible length; no other direction makes the projected scores spread more."
+    : (near2
+      ? "<b>&theta; = " + fmt(th2,1) + "&deg; &mdash; this is PC2.</b> The spread bar is at its shortest: this is the direction of least spread (perpendicular to PC1)."
+      : "The thick amber band shows &plusmn;1&sigma; of the projected scores &mdash; its length <b>is</b> the variance you keep along this direction. Rotate toward the rose dashed line (PC1) to maximize it.");
+  updateVarMarker(a, v);
+}
+
+/* variance curve */
+const VW=560, VH=200, VX0=48, VX1=540, VY0=158, VY1=20;
+const vX = (deg) => VX0 + (VX1-VX0)*deg/180;
+const vY = (v) => VY0 + (VY1-VY0)*Math.min(v, l1*1.001)/l1;
+const vsvg = $("var-svg");
+(function(){
+  el("rect", {x:VX0, y:VY1, width:VX1-VX0, height:VY0-VY1, class:"plot-bg"}, vsvg);
+  let dstr = "";
+  for (let dg=0; dg<=180; dg+=1){
+    dstr += (dg===0?"M":"L") + fmt(vX(dg),1) + " " + fmt(vY(varAt(dg)),1) + " ";
+  }
+  el("path", {d:dstr + "L" + vX(180) + " " + vY(0) + " L" + vX(0) + " " + vY(0) + " Z", class:"curve-fill"}, vsvg);
+  el("path", {d:dstr, class:"curve"}, vsvg);
+  /* PC markers */
+  for (const [ang, cls, lab, ly] of [[th1,"pc1-line","max = PC1", VY1+16],[th2,"pc2-line","min = PC2", VY0-10]]){
+    el("line", {x1:vX(ang), y1:VY1, x2:vX(ang), y2:VY0, class:cls}, vsvg);
+    const t = el("text", {x:vX(ang)+(th1<150?6:-6), y:ly, class:(cls==="pc1-line"?"glamp":"glamn"), "text-anchor":(th1<150?"start":"end")}, vsvg);
+    t.textContent = lab;
+  }
+  /* axes */
+  el("line", {x1:VX0, y1:VY0, x2:VX1, y2:VY0, class:"axis"}, vsvg);
+  el("line", {x1:VX0, y1:VY1, x2:VX0, y2:VY0, class:"axis"}, vsvg);
+  const xt = el("text", {x:(VX0+VX1)/2, y:VH-6, class:"axis-lab", "text-anchor":"middle"}, vsvg);
+  xt.textContent = "direction angle \u03B8";
+  const yt = el("text", {x:10, y:(VY0+VY1)/2, class:"axis-lab", "text-anchor":"middle", transform:"rotate(-90 10 " + ((VY0+VY1)/2) + ")"}, vsvg);  yt.textContent = "projected score variance";
+})();
+const varMarkerLine = el("line", {y1:VY1, y2:VY0, class:"axis", "stroke-dasharray":"2 3", opacity:.7}, vsvg);
+const varMarkerDot = el("circle", {r:5, fill:"var(--amber)", stroke:"var(--surface)", "stroke-width":1.5}, vsvg);
+function updateVarMarker(a, v){
+  varMarkerLine.setAttribute("x1", vX(a)); varMarkerLine.setAttribute("x2", vX(a));
+  varMarkerDot.setAttribute("cx", vX(a)); varMarkerDot.setAttribute("cy", vY(v));
+}
+
+/* wiring */
+$("ang").addEventListener("input", (e) => { curAngle = parseFloat(e.target.value); updateS1(); });
+$("ck-proj").addEventListener("change", (e) => gProj.style.display = e.target.checked ? "" : "none");
+$("ck-drop").addEventListener("change", (e) => gDrop.style.display = e.target.checked ? "" : "none");
+
+let rafId = null;
+function tweenTo(target){
+  if (reduceMotion){ curAngle = target; $("ang").value = target; updateS1(); return; }
+  if (rafId) cancelAnimationFrame(rafId);
+  const start = curAngle, t0 = performance.now();
+  const step = (t) => {
+    const k = Math.min(1, (t-t0)/500);
+    const e = 1 - Math.pow(1-k, 3);
+    curAngle = start + (target-start)*e;
+    $("ang").value = curAngle; updateS1();
+    if (k < 1) rafId = requestAnimationFrame(step);
+  };
+  rafId = requestAnimationFrame(step);
+}
+$("btn-pc1").addEventListener("click", () => tweenTo(th1));
+$("btn-pc2").addEventListener("click", () => tweenTo(th2));
+$("var-pc-share").textContent = "PC1 keeps " + fmt(l1/tr*100,0) + "% and PC2 " + fmt(l2/tr*100,0) + "% of the total variance.";
+curAngle = 10; updateS1();
+
+/* ============ SECTION 2: orthogonality figure ============ */
+(function(){
+  const svg = $("ortho-svg"), W=560, H=400, cx=280, cy=196, s=7.4;
+  const d2defs = el("defs", {}, svg);
+  const p2 = el("pattern", {id:"gridp2", width:28, height:28, patternUnits:"userSpaceOnUse"}, d2defs);
+  el("path", {d:"M28 0H0V28", fill:"none", class:"grid-line"}, p2);
+  el("rect", {x:16, y:12, width:W-32, height:H-56, class:"plot-bg"}, svg);
+  el("rect", {x:16, y:12, width:W-32, height:H-56, fill:"url(#gridp2)"}, svg);
+  /* 1-sigma ellipse */
+  el("ellipse", {cx:cx, cy:cy, rx:Math.sqrt(l1)*s, ry:Math.sqrt(l2)*s, class:"ell-fill", transform:"rotate(" + fmt(-Math.atan2(w1[1],w1[0])*180/Math.PI,2) + " " + cx + " " + cy + ")"}, svg);
+  el("ellipse", {cx:cx, cy:cy, rx:Math.sqrt(l1)*s, ry:Math.sqrt(l2)*s, class:"ell", transform:"rotate(" + fmt(-Math.atan2(w1[1],w1[0])*180/Math.PI,2) + " " + cx + " " + cy + ")"}, svg);
+  /* points */
+  for (const p of P) el("circle", {cx:cx+(p[0]-mx)*s, cy:cy-(p[1]-my)*s, r:3.2, class:"pt"}, svg);
+  /* PC arrows */
+  const A = 168, B = 76;
+  const m1 = el("marker", {id:"arr2", viewBox:"0 0 10 10", refX:"8.5", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"}, d2defs);
+  el("path", {d:"M0 0L10 5L0 10z", fill:"var(--rose)"}, m1);
+  const m2 = el("marker", {id:"arr3", viewBox:"0 0 10 10", refX:"8.5", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"}, d2defs);
+  el("path", {d:"M0 0L10 5L0 10z", fill:"var(--accent)"}, m2);
+  el("line", {x1:cx, y1:cy, x2:cx+A*w1[0], y2:cy-A*w1[1], stroke:"var(--rose)", "stroke-width":2.4, "marker-end":"url(#arr2)"}, svg);
+  el("line", {x1:cx, y1:cy, x2:cx+B*w2[0], y2:cy-B*w2[1], stroke:"var(--accent)", "stroke-width":2.4, "marker-end":"url(#arr3)"}, svg);
+  const t1 = el("text", {x:cx+(A+14)*w1[0], y:cy-(A+14)*w1[1]+4, class:"axis-lab-strong", fill:"var(--rose)", "text-anchor":"middle"}, svg);
+  t1.textContent = "PC1";
+  const t2 = el("text", {x:cx+(B+20)*w2[0], y:cy-(B+20)*w2[1]+4, class:"axis-lab-strong", fill:"var(--accent)", "text-anchor":"middle"}, svg);
+  t2.textContent = "PC2";
+  /* right-angle marker */
+  const q = 14;
+  const pts = [[0,0],[q,0],[q,q],[0,q]].map(([u,v]) =>
+    (cx + (u*w1[0] + v*w2[0])) + "," + (cy - (u*w1[1] + v*w2[1]))).join(" ");
+  el("polygon", {points:pts, fill:"none", stroke:"var(--text-dim)", "stroke-width":1.2}, svg);
+  const t90 = el("text", {x:cx+(q+6)*w1[0]+(q+6)*w2[0], y:cy-(q+6)*w1[1]-(q+6)*w2[1]-4, class:"glab", "text-anchor":"middle"}, svg);
+  t90.textContent = "90\u00B0";
+  /* annotation */
+  const ta = el("text", {x:26, y:H-20, class:"glab"}, svg);
+  ta.textContent = "dashed ellipse = 1\u03C3 contour of the cloud \u00B7 PCs = its axes";
+})();
+
+/* numbers card */
+(function(){
+  const f2 = (x) => (x>=0? " " : "") + x.toFixed(2);
+  $("eig-nums").innerHTML =
+    "covariance matrix C (symmetric!)\n" +
+    "C = [ " + f2(cxx) + "  " + f2(cxy) + " ]\n" +
+    "    [ " + f2(cxy) + "  " + f2(cyy) + " ]\n\n" +
+    "eigen-decomposition  C = W \u039B W\u1D40\n" +
+    "\u03BB\u2081 = " + l1.toFixed(2) + "   \u2192 <span class='hl-a'>w\u2081 = (" + w1[0].toFixed(3) + ", " + w1[1].toFixed(3) + ")  = PC1</span>\n" +
+    "\u03BB\u2082 = " + l2.toFixed(2) + "  \u2192 <span class='hl-b'>w\u2082 = (" + w2[0].toFixed(3) + ", " + w2[1].toFixed(3) + ")  = PC2</span>\n\n" +
+    "check: w\u2081 \u00B7 w\u2082 = " + (w1[0]*w2[0] + w1[1]*w2[1]).toFixed(4) + " \u2192 perpendicular\n" +
+    "variance kept:  PC1 " + fmt(l1/tr*100,0) + "%  +  PC2 " + fmt(l2/tr*100,0) + "%";
+})();
+
+/* ============ SECTION 3: linked panels ============ */
+(function(){
+  const W=460, H=380;
+  const panel = (svgId, isPC) => {
+    const svg = $(svgId);
+    const cx = W/2, cy = H/2, s = 6.4;
+    const pd = el("defs", {}, svg);
+    const p3 = el("pattern", {id:"gridp3"+(isPC?"b":"a"), width:26, height:26, patternUnits:"userSpaceOnUse"}, pd);
+    el("path", {d:"M26 0H0V26", fill:"none", class:"grid-line"}, p3);
+    el("rect", {x:14, y:12, width:W-28, height:H-52, class:"plot-bg"}, svg);
+    el("rect", {x:14, y:12, width:W-28, height:H-52, fill:"url(#gridp3"+(isPC?"b":"a")+")"}, svg);
+    let hxA, hyA; /* guide lines */
+    const mkAxes = (wx, wy, lx, ly, cls1, cls2) => {
+      const L1 = 190;
+      el("line", {x1:cx-L1*wx[0], y1:cy+L1*wx[1], x2:cx+L1*wx[0], y2:cy-L1*wx[1], class:cls1, opacity:.5}, svg);
+      el("line", {x1:cx-L1*wy[0], y1:cy+L1*wy[1], x2:cx+L1*wy[0], y2:cy-L1*wy[1], class:cls2, opacity:.5}, svg);
+    };
+    if (!isPC){
+      /* solid original axes */
+      el("line", {x1:20, y1:cy, x2:W-20, y2:cy, class:"axis", "marker-end":"url(#arrg)"}, svg);
+      el("line", {x1:cx, y1:H-24, x2:cx, y2:24, class:"axis", "marker-end":"url(#arrg)"}, svg);
+      const lx = el("text", {x:W-22, y:cy+18, class:"axis-lab-strong", "text-anchor":"end"}, svg); lx.textContent="x\u2081";
+      const ly2 = el("text", {x:cx+10, y:34, class:"axis-lab-strong"}, svg); ly2.textContent="x\u2082";
+      /* faint PC axes */
+      mkAxes(w1, w2, null, null, "pc1-line", "pc2-line");
+      const l1t = el("text", {x:cx+148*w1[0], y:cy-148*w1[1]-9, class:"glamp", "text-anchor":"middle"}, svg); l1t.textContent="PC1 will point here";
+      const l2t = el("text", {x:cx+200*w2[0], y:cy-200*w2[1]-6, class:"glamn", "text-anchor":"middle"}, svg); l2t.textContent="PC2";
+    } else {
+      el("line", {x1:20, y1:cy, x2:W-20, y2:cy, class:"axis", "marker-end":"url(#arrg)"}, svg);
+      el("line", {x1:cx, y1:H-24, x2:cx, y2:24, class:"axis", "marker-end":"url(#arrg)"}, svg);
+      const lx = el("text", {x:W-22, y:cy+18, class:"axis-lab-strong", "text-anchor":"end"}, svg); lx.textContent="PC1";
+      const ly2 = el("text", {x:cx+10, y:34, class:"axis-lab-strong"}, svg); ly2.textContent="PC2";
+      /* faint old axes: original feature axes seen from the PC basis */
+      const ox1 = [ w1[0], w1[1] ];          /* old x1-axis, screen coords */
+      const ox2 = [ w1[1], -w2[1] ];         /* old x2-axis, screen coords */
+      mkAxes(ox1, ox2, null, null, "gline", "gline");
+      const ot = el("text", {x:cx+200*ox1[0], y:cy+200*ox1[1]-6, class:"glab", "text-anchor":"middle"}, svg); ot.textContent="old x\u2081 axis";
+    }
+    /* guide lines for selected point */
+    hxA = el("line", {class:"gline", opacity:0}, svg);
+    hyA = el("line", {class:"gline", opacity:0}, svg);
+    return {svg, cx, cy, s, hxA, hyA};
+  };
+
+  const panA = panel("orig-svg", false);
+  const panB = panel("pc-svg", true);
+
+  const dotsA = [], dotsB = [];
+  for (let i=0;i<N;i++){
+    const p=P[i], sc=scores[i];
+    const cA = el("circle", {cx:panA.cx+(p[0]-mx)*panA.s, cy:panA.cy-(p[1]-my)*panA.s, r:3.6, class:"pt-sm"}, panA.svg);
+    const cB = el("circle", {cx:panB.cx+sc[0]*panB.s, cy:panB.cy-sc[1]*panB.s, r:3.6, class:"pt-sm"}, panB.svg);
+    cA.style.cursor="pointer"; cB.style.cursor="pointer";
+    cA.setAttribute("data-i", i); cB.setAttribute("data-i", i);
+    dotsA.push(cA); dotsB.push(cB);
+  }
+  let selected = scores.reduce((best,sc,i)=>sc[0]>scores[best][0]?i:best, 0);
+  function select(i){
+    selected = i;
+    dotsA.forEach((c,j)=>c.classList.toggle("pt-sm-hl", j===i));
+    dotsB.forEach((c,j)=>c.classList.toggle("pt-sm-hl", j===i));
+    const p=P[i], sc=scores[i];
+    const ax=panA.cx+(p[0]-mx)*panA.s, ay=panA.cy-(p[1]-my)*panA.s;
+    panA.hxA.setAttribute("x1",ax); panA.hxA.setAttribute("y1",ay); panA.hxA.setAttribute("x2",ax); panA.hxA.setAttribute("y2",panA.cy);
+    panA.hyA.setAttribute("x1",ax); panA.hyA.setAttribute("y1",ay); panA.hyA.setAttribute("x2",panA.cx); panA.hyA.setAttribute("y2",ay);
+    const bx=panB.cx+sc[0]*panB.s, by=panB.cy-sc[1]*panB.s;
+    panB.hxA.setAttribute("x1",bx); panB.hxA.setAttribute("y1",by); panB.hxA.setAttribute("x2",bx); panB.hxA.setAttribute("y2",panB.cy);
+    panB.hyA.setAttribute("x1",bx); panB.hyA.setAttribute("y1",by); panB.hyA.setAttribute("x2",panB.cx); panB.hyA.setAttribute("y2",by);
+    panA.hxA.setAttribute("opacity",.9); panA.hyA.setAttribute("opacity",.9);
+    panB.hxA.setAttribute("opacity",.9); panB.hyA.setAttribute("opacity",.9);
+    $("sample-info").innerHTML =
+      "<span class='k'>sample&nbsp;#</span><span class='v'>" + (i+1) + "</span> &nbsp;&nbsp;" +
+      "<span class='k'>original features:</span> <span class='v'>x\u2081 = " + fmt(p[0],1) + ", &nbsp;x\u2082 = " + fmt(p[1],1) + "</span><br>" +
+      "<span class='k'>PC scores:</span> <span class='v'>PC1 = " + fmt(sc[0],1) + ", &nbsp;PC2 = " + fmt(sc[1],1) + "</span> &nbsp;&nbsp;" +
+      "<span class='k'>&mdash; same sample, two coordinate systems</span>";
+  }
+  const wire = (dots) => dots.forEach(c => {
+    c.addEventListener("mouseenter", ()=>select(parseInt(c.getAttribute("data-i"),10)));
+    c.addEventListener("click", ()=>select(parseInt(c.getAttribute("data-i"),10)));
+  });
+  wire(dotsA); wire(dotsB);
+  select(selected);
+})();
+
+/* ============ SECTION 4: scree + HD scatter ============ */
+(function(){
+  const hd = PAYLOAD.hd;
+  /* ---- scree ---- */
+  const svg = $("scree-svg");
+  const W=560, H=300, x0=52, x1=514, y0=232, y1=30;
+  const evr = hd.evr; /* fractions, 15 entries */
+  const cum = hd.cum; /* cumulative fractions at each of the 15 */
+  const nb = evr.length + 1; /* extra slot = endpoint for "all remaining PCs" */
+  const bw = (x1-x0)/nb * 0.72;
+  const xi = (i) => x0 + (x1-x0)*(i+0.5)/nb;
+  const vmax = evr[0]*1.30;            /* bar scale (left axis) */
+  const yv = (v) => y0 + (y1-y0)*v/vmax;
+  const yc = (c) => y0 + (y1-y0)*c;    /* cumulative scale 0..1 (right axis) */
+  el("rect", {x:x0-6, y:y1, width:x1-x0+12, height:y0-y1, class:"plot-bg"}, svg);
+  for (let g=0; g<=4; g++){
+    const v = vmax*g/4;
+    el("line", {x1:x0, y1:yv(v), x2:x1, y2:yv(v), class:"grid-line"}, svg);
+    const t = el("text", {x:x0-8, y:yv(v)+4, class:"glab", "text-anchor":"end"}, svg);
+    t.textContent = Math.round(v*100) + "%";
+  }
+  evr.forEach((v,i) => {
+    el("rect", {x:xi(i)-bw/2, y:yv(v), width:bw, height:y0-yv(v), class:"bar"}, svg);
+  });
+  evr.slice(0,3).forEach((v,i) => {
+    const t = el("text", {x:xi(i), y:yv(v)-6, class:"glab", "text-anchor":"middle", "font-weight":"600", fill:"var(--accent)"}, svg);
+    t.textContent = Math.round(v*100) + "%";
+  });
+  /* cumulative line on its own 0-100% scale (right axis) */
+  let d = "";
+  cum.forEach((c,i) => { d += (i===0?"M":"L") + xi(i) + " " + yc(c) + " "; });
+  el("path", {d:d, class:"cum"}, svg);
+  cum.forEach((c,i) => el("circle", {cx:xi(i), cy:yc(c), r:3, class:"cum-pt"}, svg));
+  /* dashed extension to 100% (includes PC16-100) */
+  el("path", {d:"M" + xi(cum.length-1) + " " + yc(cum[cum.length-1]) + " L" + xi(nb-1) + " " + yc(1), class:"cum", "stroke-dasharray":"4 4", opacity:.75}, svg);
+  el("circle", {cx:xi(nb-1), cy:yc(1), r:3.5, class:"cum-pt", fill:"none", stroke:"var(--amber)", "stroke-width":1.6}, svg);
+  const cl = el("text", {x:xi(nb-1)-8, y:yc(1)+16, class:"glab", fill:"var(--amber)", "font-weight":"600", "text-anchor":"end"}, svg);
+  cl.textContent = "100% incl. PC16\u2013100";
+  /* x labels */
+  for (let i=0;i<nb-1;i++){
+    const t = el("text", {x:xi(i), y:y0+16, class:"glab", "text-anchor":"middle"}, svg);
+    t.textContent = (i+1);
+  }
+  const xt = el("text", {x:(x0+x1)/2, y:H-14, class:"axis-lab", "text-anchor":"middle"}, svg);
+  xt.textContent = "principal component";
+  /* right y axis for cumulative */
+  el("line", {x1:x1, y1:y1, x2:x1, y2:y0, class:"axis", opacity:.6}, svg);
+  [0,.5,1].forEach(v => {
+    const t = el("text", {x:x1+6, y:yc(v)+4, class:"glab", fill:"var(--amber)"}, svg);
+    t.textContent = Math.round(v*100)+"%";
+  });
+
+  /* ---- HD scatter ---- */
+  const s2 = $("hd-svg");
+  const W2=560, H2=420, cx2=280, cy2=205, sc2=11.5;
+  const d4 = el("defs", {}, s2);
+  const p4 = el("pattern", {id:"gridp4", width:28, height:28, patternUnits:"userSpaceOnUse"}, d4);
+  el("path", {d:"M28 0H0V28", fill:"none", class:"grid-line"}, p4);
+  el("rect", {x:16, y:14, width:W2-32, height:H2-56, class:"plot-bg"}, s2);
+  el("rect", {x:16, y:14, width:W2-32, height:H2-56, fill:"url(#gridp4)"}, s2);
+  el("line", {x1:24, y1:cy2, x2:W2-24, y2:cy2, class:"axis", "marker-end":"url(#arrg)"}, s2);
+  el("line", {x1:cx2, y1:H2-26, x2:cx2, y2:26, class:"axis", "marker-end":"url(#arrg)"}, s2);
+  const lx = el("text", {x:W2-24, y:cy2+20, class:"axis-lab-strong", "text-anchor":"end"}, s2); lx.textContent="PC1";
+  const ly2 = el("text", {x:cx2+10, y:38, class:"axis-lab-strong"}, s2); ly2.textContent="PC2";
+  const classes = ["cl-a","cl-b","cl-c"];
+  const tip = document.createElement("div");
+  tip.className = "tooltip"; s2.parentNode.insertBefore(tip, s2.nextSibling);
+  const cts = [0,0,0];
+  hd.scores.forEach((sc, i) => {
+    const g = hd.labels[i]; cts[g]++;
+    const c = el("circle", {cx:cx2+sc[0]*sc2, cy:cy2-sc[1]*sc2, r:4.2, class:classes[g]}, s2);
+    c.setAttribute("data-i", i);
+    c.style.cursor = "crosshair";
+    c.addEventListener("mouseenter", (ev) => {
+      c.setAttribute("r", 6.5);
+      const cts2=["A","B","C"];
+      tip.innerHTML = "sample #" + (i+1) + " &middot; group " + cts2[g] + "<br>PC1 = " + fmt(sc[0],1) + " &nbsp; PC2 = " + fmt(sc[1],1);
+      tip.style.opacity = 1;
+    });
+    c.addEventListener("mousemove", (ev) => {
+      const r = s2.getBoundingClientRect();
+      const xr = (ev.clientX - r.left)/r.width, yr = (ev.clientY - r.top)/r.height;
+      tip.style.left = "calc(" + (xr*100) + "% + 12px)";
+      tip.style.top = "calc(" + (yr*100) + "% - 10px)";
+    });
+    c.addEventListener("mouseleave", () => { c.setAttribute("r", 4.2); tip.style.opacity = 0; });
+  });
+})();
+
+/* ============ SECTION 5: loadings ============ */
+(function(){
+  const box = $("loadings");
+  const maxw = Math.max(...PAYLOAD.hd.loadings.map(l => Math.abs(l.w)));
+  PAYLOAD.hd.loadings.forEach(l => {
+    const row = document.createElement("div");
+    row.className = "load-row";
+    const pos = l.w >= 0;
+    const wpx = Math.abs(l.w)/maxw*50;
+    row.innerHTML =
+      "<div class='load-name'>feature " + l.f + "</div>" +
+      "<div class='load-track'><div class='load-bar " + (pos?"load-bar--pos":"load-bar--neg") + "' style='" +
+        (pos ? "left:50%;width:" + wpx + "%" : "right:50%;width:" + wpx + "%") + "'></div>" +
+      "<div style='position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border-bright)'></div></div>" +
+      "<div class='load-val'>" + (l.w>=0?"+":"\u2212") + Math.abs(l.w).toFixed(3) + "</div>";
+    box.appendChild(row);
+  });
+  $("pc1-formula").textContent = PAYLOAD.hd.loadings.map(l =>
+    (l.w>=0?"+ ":"\u2212 ") + Math.abs(l.w).toFixed(2) + "\u00B7f" + l.f).join("  ") + "  + \u22EF";
+})();
+
+/* ============ scroll spy ============ */
+(function(){
+  const toc = document.getElementById("toc");
+  const links = toc.querySelectorAll("a");
+  const sections = [];
+  links.forEach(link => {
+    const id = link.getAttribute("href").slice(1);
+    const elx = document.getElementById(id);
+    if (elx) sections.push({ id, el: elx, link });
+  });
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        links.forEach(l => l.classList.remove("active"));
+        const match = sections.find(s => s.el === entry.target);
+        if (match){
+          match.link.classList.add("active");
+          if (window.innerWidth <= 1000) match.link.scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
+        }
+      }
+    });
+  }, { rootMargin: "-10% 0px -80% 0px" });
+  sections.forEach(s => observer.observe(s.el));
+  links.forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      const id = link.getAttribute("href").slice(1);
+      const elx = document.getElementById(id);
+      if (elx){ elx.scrollIntoView({behavior:"smooth", block:"start"}); history.replaceState(null,"","#"+id); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
