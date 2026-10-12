@@ -200,7 +200,31 @@ header.site-nav {
 
 .hero-links a:hover { border-color: var(--teal); color: var(--teal-deep); }
 
-.hero-graphic { width: 100%; height: auto; }
+.hero-visual {
+  position: relative;
+}
+
+.hero-graphic { width: 100%; height: auto; display: block; }
+
+.hero-portrait {
+  position: absolute;
+  left: -2%;
+  bottom: -4%;
+  width: 46%;
+  aspect-ratio: 1;
+  height: auto;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  box-shadow: 0 0 0 6px var(--paper), 0 10px 30px rgba(20, 81, 78, 0.12);
+}
+
+@media (max-width: 800px) {
+  .hero-visual { order: -1; }
+  .hero-graphic { display: none; }
+  .hero-portrait { position: static; width: 140px; }
+}
 
 /* ---------------- Sections ---------------- */
 main { padding-bottom: 80px; }
