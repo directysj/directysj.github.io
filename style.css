@@ -3,6 +3,7 @@
    Design tokens
 ----------------------------------------------------------------- */
 :root {
+  color-scheme: light;
   --ink: #12181c;
   --ink-soft: #2b343a;
   --slate: #55636b;
@@ -17,7 +18,7 @@
   --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 
-  --max: 780px;
+  --max: 740px;
   --max-wide: 1080px;
 }
 
@@ -76,7 +77,7 @@ header.site-nav {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(237, 241, 239, 0.92);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--line);
 }
@@ -273,6 +274,7 @@ main { padding-bottom: 80px; }
 }
 
 .pub-list a {
+  color: var(--teal-deep);
   border-bottom: 1px solid var(--line);
 }
 
@@ -280,8 +282,10 @@ main { padding-bottom: 80px; }
 
 /* ---------------- Page header (non-home pages) ---------------- */
 .page-head {
-  padding: 56px 0 40px;
-  border-bottom: 1px solid var(--line);
+  padding-top: 56px;
+  padding-bottom: 40px;
+  /* rule spans the content width, matching the section rules below */
+  background: linear-gradient(var(--line), var(--line)) center bottom / calc(100% - 48px) 1px no-repeat;
 }
 
 .page-head h1 {
@@ -345,3 +349,140 @@ footer {
 
 footer a { border-bottom: 1px solid var(--line); }
 footer a:hover { border-color: var(--teal); color: var(--teal-deep); }
+
+/* ---------------- Typography refinements ---------------- */
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+
+/* ---------------- Research: figure left, text right ---------------- */
+.research .section > h2 { max-width: 46ch; }
+
+.research .section > p,
+.research .section > ul {
+  max-width: 68ch;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 44px;
+  align-items: start;
+}
+
+.split-media {
+  position: sticky;
+  top: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.split-media .figure { margin: 0; }
+
+.split-text { max-width: 62ch; }
+.split-text > :first-child { margin-top: 0; }
+.split-text .pub-list { margin-top: 24px; }
+
+@media (max-width: 860px) {
+  .split { grid-template-columns: 1fr; gap: 24px; }
+  .split-media { position: static; }
+}
+
+/* ---------------- Figure zoom ---------------- */
+.figure img { cursor: zoom-in; }
+
+.lightbox {
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-width: 94vw;
+  max-height: 92vh;
+}
+
+.lightbox::backdrop { background: rgba(18, 24, 28, 0.82); }
+
+.lightbox img {
+  max-width: 94vw;
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  background: var(--paper-raised);
+  padding: 8px;
+  cursor: zoom-out;
+}
+
+.lightbox p {
+  color: #e6ece9;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  margin: 10px 0 0;
+  text-align: center;
+}
+
+/* ---------------- Home ---------------- */
+.home .section > p { max-width: 68ch; }
+
+.interest-cards {
+  list-style: none;
+  padding: 0;
+  margin: 26px 0 30px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.interest-cards li {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px 22px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--teal);
+  font-family: var(--serif);
+  font-size: 1.08rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.interest-cards .num {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 760px) {
+  .interest-cards { grid-template-columns: 1fr; }
+}
+
+.text-link { border-bottom: 1px solid var(--line); transition: border-color 0.15s ease, color 0.15s ease; }
+.text-link:hover { border-color: var(--teal); color: var(--teal-deep); }
+
+/* ---------------- Hero network colours (themeable) ---------------- */
+.net-edges { stroke: var(--teal); }
+.net-path, .net-halo { stroke: var(--amber); }
+.net-nodes { fill: var(--paper); stroke: var(--teal); }
+.net-source { fill: var(--teal-deep); }
+.net-target { fill: var(--amber); }
+
+/* Figures are drawn for a white page; keep them on white in either theme */
+.figure img { background: #fff; }
+
+/* ---------------- Dark mode (follows the system setting) ---------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #e6ece9;
+    --ink-soft: #c9d3cf;
+    --slate: #98a7a1;
+    --paper: #12181a;
+    --paper-raised: #1a2326;
+    --line: #2d393b;
+    --teal: #4aa9a1;
+    --teal-deep: #7ccdc5;
+    --amber: #d69c4f;
+  }
+  .net-edges { stroke-opacity: 0.35; }
+  .cv-download:hover { color: var(--paper); }
+}
